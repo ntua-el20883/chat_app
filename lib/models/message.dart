@@ -6,6 +6,7 @@ class Message {
   final String receiverID;
   final String message;
   final Timestamp timestamp;
+  final String? audioUrl; // Optional field for audio URL
 
   Message({
     required this.senderID,
@@ -13,6 +14,7 @@ class Message {
     required this.receiverID,
     required this.message,
     required this.timestamp,
+    this.audioUrl, // Initialize as null by default
   });
 
   // convert to map
@@ -23,6 +25,7 @@ class Message {
       'receiverID': receiverID,
       'message': message,
       'timestamp': timestamp,
+      'audioUrl': audioUrl, // Include audioUrl in the map
     };
   }
 }

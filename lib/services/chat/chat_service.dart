@@ -58,4 +58,26 @@ class ChatService {
         .orderBy("timestamp", descending: false)
         .snapshots();
   }
+
+  Future<void> sendAudioMessage(String receiverID, String audioUrl) async {
+  // Get current user info
+  final currentUser = _auth.currentUser;
+  if (currentUser == null) return;
+
+  final Timestamp timestamp = Timestamp.now();
+
+  // Create a new message
+  Message newMessage = Message(
+    senderID: currentUser.uid,
+    senderEmail: currentUser.email!,
+    receiverID: receiverID,
+    message: '', // Empty message for audio
+    audioUrl: audioUrl, // Add audio URL
+    timestamp: timestamp,
+  );
+
+  // Save to Firestore (adjust according to your Firestore structure)
+  await _firestore.collection('messages').add(newMessage.toMap());
+}
+
 }

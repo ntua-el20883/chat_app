@@ -4,12 +4,14 @@ import 'package:juanapp/components/chat_bubble.dart';
 import 'package:juanapp/components/my_textfield.dart';
 import 'package:juanapp/services/auth/auth_service.dart';
 import 'package:juanapp/services/chat/chat_service.dart';
+import 'package:juanapp/services/audio/audio_service.dart';
 
 class ChatPage extends StatefulWidget {
   final String receiverEmail;
   final String receiverID;
 
-  ChatPage({super.key, required this.receiverEmail, required this.receiverID});
+  const ChatPage(
+      {super.key, required this.receiverEmail, required this.receiverID});
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -22,6 +24,9 @@ class _ChatPageState extends State<ChatPage> {
   // chat and auth services
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
+
+  final AudioService _audioService = AudioService();
+  bool _isRecording = false;
 
   FocusNode myFocusNode = FocusNode();
 
@@ -39,7 +44,42 @@ class _ChatPageState extends State<ChatPage> {
           () => scrollDown(),
         );
       }
+      _audioService.init(); // Initialize the audio service
     });
+
+    @override
+    void dispose() {
+      // Dispose the audio service
+      _audioService.dispose();
+      super.dispose();
+    }
+
+    void toggleRecording() async {
+      if (_isRecording) {
+        final String? filePath = await _audioService.stopRecording();
+        if (filePath != null) {
+          final String? audioUrl =
+              await _audioService.uploadAudioFile(filePath);
+          if (audioUrl != null) {
+            // Send the audio message
+            await _chatService.sendAudioMessage(widget.receiverID, audioUrl);
+          }
+        }
+      } else {
+        await _audioService.startRecording();
+      }
+      setState(() {
+        _isRecording = !_isRecording;
+      });
+    }
+
+    Widget _recordButton() {
+      return IconButton(
+        icon: Icon(_isRecording ? Icons.stop : Icons.mic),
+        onPressed: toggleRecording,
+        color: _isRecording ? Colors.red : Colors.blue,
+      );
+    }
 
     // wait for listview to show
     Future.delayed(
@@ -147,6 +187,33 @@ class _ChatPageState extends State<ChatPage> {
 
   // build message input
   Widget _buildUserInput() {
+    void toggleRecording() async {
+      if (_isRecording) {
+        final String? filePath = await _audioService.stopRecording();
+        if (filePath != null) {
+          final String? audioUrl =
+              await _audioService.uploadAudioFile(filePath);
+          if (audioUrl != null) {
+            // Send the audio message
+            await _chatService.sendAudioMessage(widget.receiverID, audioUrl);
+          }
+        }
+      } else {
+        await _audioService.startRecording();
+      }
+      setState(() {
+        _isRecording = !_isRecording;
+      });
+    }
+
+    Widget _recordButton() {
+      return IconButton(
+        icon: Icon(_isRecording ? Icons.stop : Icons.mic),
+        onPressed: toggleRecording,
+        color: _isRecording ? Colors.red : Colors.blue,
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 50.0),
       child: Row(
@@ -175,7 +242,10 @@ class _ChatPageState extends State<ChatPage> {
                 color: Colors.white,
               ),
             ),
-          )
+          ),
+
+          // send audio button
+          _recordButton(),
         ],
       ),
     );
